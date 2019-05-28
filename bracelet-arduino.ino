@@ -8,15 +8,15 @@
 #include <SoftwareSerial.h>
 
 /*
- * ATTENTION ! SI VOUS ETES EN LIBRAIRIE ESP8266 2.5.2
- * IL Y A UNE ERREUR SUR LA FONCTION SoftwareSerial.available()
- * IL FAUT DONC MODIFIER SALEMENT LA LIBRAIRIE NEONEXTION
- * 
- * Fichier : C:\Users\YOU\Documents\Arduino\libraries\NeoNextion\Nextion.cpp
- * Ligne : 50
- * 
- * Remplacer par : `if (m_serialPort.available() + 1 >= 6)`
- */
+   ATTENTION ! SI VOUS ETES EN LIBRAIRIE ESP8266 2.5.2
+   IL Y A UNE ERREUR SUR LA FONCTION SoftwareSerial.available()
+   IL FAUT DONC MODIFIER SALEMENT LA LIBRAIRIE NEONEXTION
+
+   Fichier : C:\Users\YOU\Documents\Arduino\libraries\NeoNextion\Nextion.cpp
+   Ligne : 50
+
+   Remplacer par : `if (m_serialPort.available() + 1 >= 6)`
+*/
 
 SoftwareSerial nextionSerial(13, 14); // RX, TX
 
@@ -85,7 +85,7 @@ void loop() {
   }
 }
 
-bool getResponseByUrl(char* url, char* HTTP_method, bool settingText = false)
+bool getResponseByUrl(char* url, char* HTTP_method, bool settingText = false, bool sendAlert = false)
 {
   if (WiFi.status() == WL_CONNECTED)
   {
@@ -115,20 +115,31 @@ bool getResponseByUrl(char* url, char* HTTP_method, bool settingText = false)
           sprintf(myText, "%s %s", (const char*)myObject["first_name"], (const char*)myObject["last_name"]);
           textName.setText(myText);
         }
-        
+
         if (myObject.hasOwnProperty("medications")) {
           char myText1[100];
-          
-          sprintf(myText1, "Drug : %s, Number : %i, Schedule : %s, %s the meal", (const char*)myObject["medications"][0]["patent_medication"]["drug"]["name"], (int)myObject["medications"][0]["patent_medication"]["number"], (const char*)myObject["medications"][0]["patent_medication"]["schedule"], (const char*)myObject["medications"][0]["patent_medication"]["meal_period"]);
-          
+          const char* drug_name = (const char*)myObject["medications"][0]["patent_medication"]["drug"]["name"];
+          int number = (int)myObject["medications"][0]["patent_medication"]["number"];
+          const char* schedule = (const char*)myObject["medications"][0]["patent_medication"]["schedule"];
+          const char* meal_period = (const char*)myObject["medications"][0]["patent_medication"]["meal_period"];
+
           Serial.println(myText1);
-          textMed1.setText(myText1);
-          
-          char myText2[100];
-          sprintf(myText2, "Drug : %s, Number : %i, Schedule : %s, %s the meal", (const char*)myObject["medications"][0]["patent_medication"]["drug"]["name"], (int)myObject["medications"][0]["patent_medication"]["number"], (const char*)myObject["medications"][0]["patent_medication"]["schedule"], (const char*)myObject["medications"][0]["patent_medication"]["meal_period"]);
-          
-          Serial.println(myText2);
-          textMed2.setText(myText2);
+          if (sendAlert) {
+            if (meal_period == "after") {
+              meal_period = "apres";
+            }
+            sprintf(myText1, "%i comprimes %s %s le repas", number, drug_name, meal_period);
+            text.setText(myText1);
+          } else {
+            sprintf(myText1, "Drug : %s, Number : %i, Schedule : %s, %s the meal", drug_name, number, schedule, meal_period);
+            textMed1.setText(myText1);
+
+            char myText2[100];
+            sprintf(myText2, "Drug : %s, Number : %i, Schedule : %s, %s the meal", (const char*)myObject["medications"][1]["patent_medication"]["drug"]["name"], (int)myObject["medications"][1]["patent_medication"]["number"], (const char*)myObject["medications"][1]["patent_medication"]["schedule"], (const char*)myObject["medications"][1]["patent_medication"]["meal_period"]);
+
+            Serial.println(myText2);
+            textMed2.setText(myText2);
+          }
         }
       }
     }
@@ -156,7 +167,7 @@ void bAlertPopCallback(NextionEventType type, INextionTouchable * widget) {
   Serial.println("Alert");
   if (type == NEX_EVENT_POP)
   {
-    text.setText("2 comprimes \n ABILIFY MAINTENA 300 mg \n apres le repas.");
+    getResponseByUrl("/api/v1/patent/1", "get", true, true);
   }
 }
 
