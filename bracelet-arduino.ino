@@ -37,6 +37,10 @@ const char* password = "azerty123";
 const char* host = "bracelet.nguyenantoine.com";
 const uint16_t port = 443;
 
+int buzzPin=4;
+int frequency=1000; //Specified in Hz
+int runBuzzer = -1;
+
 void setup()
 {
   Serial.begin(9600);
@@ -78,10 +82,23 @@ void loop() {
   nex.poll();
   //if(nextionSerial.available()) {Serial.print(nextionSerial.read(),HEX);Serial.print(" ");}
   static unsigned long start = millis();
-  if (millis() > start + 1000)
+  if (millis() > start + 500)
   {
     start = millis();
     Serial.println("tick");
+
+    if (runBuzzer >= 0) {
+      if (runBuzzer % 2 == 0) {
+        tone(buzzPin, frequency);
+      } else {
+        noTone(buzzPin);
+      }
+      runBuzzer--;
+
+//      Serial.println(runBuzzer);
+      if (runBuzzer == -1)
+        noTone(buzzPin);
+    }
   }
 }
 
@@ -89,6 +106,7 @@ bool getResponseByUrl(char* url, char* HTTP_method, bool settingText = false, bo
 {
   if (WiFi.status() == WL_CONNECTED)
   {
+    text.setText("Chargement...");
     Serial.println("wifi OK");
     BearSSL::WiFiClientSecure client;
     client.setInsecure();
@@ -123,7 +141,6 @@ bool getResponseByUrl(char* url, char* HTTP_method, bool settingText = false, bo
           const char* schedule = (const char*)myObject["medications"][0]["patent_medication"]["schedule"];
           const char* meal_period = (const char*)myObject["medications"][0]["patent_medication"]["meal_period"];
 
-          Serial.println(myText1);
           if (sendAlert) {
             if (meal_period == "after") {
               meal_period = "apres";
@@ -167,6 +184,7 @@ void bAlertPopCallback(NextionEventType type, INextionTouchable * widget) {
   Serial.println("Alert");
   if (type == NEX_EVENT_POP)
   {
+    runBuzzer = 10;
     getResponseByUrl("/api/v1/patent/1", "get", true, true);
   }
 }
