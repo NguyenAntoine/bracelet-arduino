@@ -76,6 +76,12 @@ void setup()
   buttonProfile.attachCallback(&bProfilePopCallback);
 
   //  Serial.println(text.setBackgroundColour(NEX_COL_BLUE));
+
+  if (WiFi.status() != WL_CONNECTED)
+  {
+    Serial.println("Wifi NOT OK, Please Restart!");
+    text.setText("Wifi NOT OK, Please Restart!");
+  }
 }
 
 void loop() {
@@ -89,15 +95,22 @@ void loop() {
 
     if (runBuzzer >= 0) {
       if (runBuzzer % 2 == 0) {
+        text.setColour("pco", NEX_COL_WHITE, false);
+        text.setBackgroundColour(NEX_COL_RED);
         tone(buzzPin, frequency);
       } else {
+        text.setColour("pco", NEX_COL_BLACK, false);
+        text.setBackgroundColour(NEX_COL_WHITE);
         noTone(buzzPin);
       }
       runBuzzer--;
 
 //      Serial.println(runBuzzer);
-      if (runBuzzer == -1)
+      if (runBuzzer == -1) {
+        text.setColour("pco", NEX_COL_BLACK, false);
+        text.setBackgroundColour(NEX_COL_WHITE);
         noTone(buzzPin);
+      }
     }
   }
 }
