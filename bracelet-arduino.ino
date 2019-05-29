@@ -176,6 +176,9 @@ void bProfilePopCallback(NextionEventType type, INextionTouchable * widget) {
   Serial.println("Profile");
   if (type == NEX_EVENT_POP)
   {
+    textName.setText("Chargement...");
+    textMed1.setText("Chargement...");
+    textMed2.setText("Chargement...");
     getResponseByUrl("/api/v1/patent/1", "get", true);
   }
 }
